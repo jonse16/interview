@@ -1,52 +1,229 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
-<script>
-$(function() {
-    function listHouse() {
-    
-    }
-})
-</script>
+@section Scripts {
+    <script>
+        $(function() {
+            var dataMap = new Map();
+            function listHouse() {
+                dataMap = new Map();
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/list/house',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == 200) {
+                            var html = '';
+                            $.each(data.data, function(i, item) {
+                                html += '<div class="accordion-item">';
+                                html += '<h2 class="accordion-header" id="heading_' + item.id + '">';
+                                html += '<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_' + item.id + '" aria-expanded="true" aria-controls="collapse_' + item.id + '">';
+                                html += item.name;
+                                html += '</button>';
 
-<div class="text-center">
-    <h1 class="display-4">物件</h1>
-    <div class="accordion" id="accordionExample">
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingOne">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-        Accordion Item #1
-      </button>
-    </h2>
-    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
+                                html += '<div id="collapse_' + item.id + '" class="accordion-collapse collapse house" aria-labelledby="heading_' + item.id + '" data-bs-parent="#accordionExample" houseid="' + item.id + '">';
+                                html += '<div class="accordion-body">';
+                                html += '<div class="edit_' + item.id + '">';
+                                html += '</div>';
+                                html += '<div class="msg_' + item.id + '">';
+                                html += '</div>';
+                                html += '</div>';
+                                html += '</div>';
+                                html += '</div>';
+                            })
+                            $('#accordionExample').html(html)
+                            $.each($('.house'), function(i, item) {
+                                var houseid = $(item).attr('houseid');
+                                listMsg(houseid)
+                            })
+
+                        } else {
+                            $('#accordionExample').html('')
+                            alert(data.msg)
+                        }
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        $('#accordionExample').html('')
+                        alert('server error')
+                    }
+                })
+            }
+            listHouse();
+
+            function listMsg(houseId) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/list/msg',
+                    data: { "houseId": houseId },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == 200) {
+                            var html = '';
+                            html += '<button type="button" class="btn btn-success btn-sm new" houseid="' + houseId + '">New</button>';
+                            html += '<table class="table">'
+                            html += '<thead>'
+                            html += '<tr>'
+                            html += '<th scope="col">Time</th>'
+                            html += '<th scope="col">Name</th>'
+                            html += '<th scope="col">Msg</th>'
+                            html += '<th scope="col">Edit</th>'
+                            html += '<th scope="col">Delete</th>'
+                            html += '</tr>'
+                            html += '</thead>'
+                            html += '<tbody>'
+
+                            var m = new Map();
+                            $.each(data.data, function(i, item) {
+                                html += '<tr>'
+                                html += '<td>' + item.lastUpdateDateTime + '</td> ';
+                                html += '<td>' + item.name + '</td> ';
+                                html += '<td>' + item.msg + '</td> ';
+                                html += '<td><button type="button" class="btn btn-secondary btn-sm edit" houseid="' + houseId + '" msgid="' + item.id + '">Edit</button></td> ';
+                                html += '<td><button type="button" class="btn btn-danger btn-sm delete" houseid="' + houseId + '" msgid="' + item.id + '">Delete</button></td> ';
+                                html += '</tr>'
+                                m.set(item.id, item);
+                            })
+
+                            dataMap.set(houseId, m)
+                            html += '</tbody>'
+                            html += '</table>'
+                            $(".msg_" + houseId).html(html)
+                        } else {
+                            alert(data.msg)
+                        }
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        alert('server error')
+                    }
+                })
+            }
+
+            $('#accordionExample').on('click', '.new', function() {
+                var houseid = $(this).attr('houseid');
+                $('#editModal .msgid').val('');
+                $('#editModal .name').prop('disabled', false);
+                $('#editModal .name').val('');
+                $('#editModal .msg').val('');
+                $('#editModal .houseid').val(houseid);
+                
+                $('#editModal').modal('show')
+            })
+
+            $('#editModal').on('click', '.save', function() { 
+                var v = $('#editModal .msgid').val();
+                var houseid = $('#editModal .houseid').val();
+                if (v == '') {
+                     $.ajax({
+                        type: 'POST',
+                        url: '/api/add',
+                        data: { "houseId": $('#editModal .houseid').val(),  'name':$('#editModal .name').val(), 'msg':$('#editModal .msg').val()},
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.status == 200) {
+                                listMsg(houseid)
+                                $('#editModal').modal('hide')
+                            } else {
+                                alert(data.msg)
+                            }
+                        },
+                        error: function(XMLHttpRequest, textStatus, errorThrown) {
+                            alert('server error')
+                        }
+                    })
+                } else { 
+                    $.ajax({
+                        type: 'POST',
+                        url: '/api/edit',
+                        data: { "msgId": $('#editModal .msgid').val(), 'msg':$('#editModal .msg').val() },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.status == 200) {
+                                listMsg(houseid)
+                                $('#editModal').modal('hide')
+                            } else {
+                                alert(data.msg)
+                            }
+                        },
+                        error: function(XMLHttpRequest, textStatus, errorThrown) {
+                            alert('server error')
+                        }
+                    })
+                }
+            })
+
+            $('#accordionExample').on('click', '.edit', function() {
+                var houseid = $(this).attr('houseid');
+                var msgid = $(this).attr('msgid');
+                $('#editModal .houseid').val(houseid);
+                if (dataMap.has(houseid)) 
+                {
+                    var h = dataMap.get(houseid);
+                    if (h.has(parseInt(msgid))) { 
+                        var m = h.get(parseInt(msgid));
+                        $('#editModal .name').prop('disabled', true);
+                        $('#editModal .name').val(m.name);
+                        $('#editModal .msg').val(m.msg);
+
+                        $('#editModal .msgid').val(m.id);
+                        $('#editModal').modal('show')
+                    }
+                }
+
+            })
+            $('#accordionExample').on('click', '.delete', function() {
+                var houseid = $(this).attr('houseid');
+                var msgid = $(this).attr('msgid');
+                $.ajax({
+                    type: 'DELETE',
+                    url: '/api/delete',
+                    data: { "msgId": msgid },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == 200) {
+                            listMsg(houseid)
+                        } else {
+                            alert(data.msg)
+                        }
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        alert('server error')
+                    }
+                })
+            })
+        })
+    </script>
+}
+
+    <div class="text-center">
+        <h1 class="display-4">物件</h1>
+        <div class="accordion" id="accordionExample">
+        </div>
+
+        <div class="modal" tabindex="-1" id="editModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-4">Name</div>
+                            <div class="col-8">
+                                <input class="name"/>
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="col-4">Msg</div>
+                            <div class="col-8">
+                                <textarea class="msg" rows="4" style=" resize: none;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" class="msgid"/>
+                    <input type="hidden" class="houseid"/>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary save">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingTwo">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-        Accordion Item #2
-      </button>
-    </h2>
-    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingThree">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-        Accordion Item #3
-      </button>
-    </h2>
-    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-</div>
-</div>

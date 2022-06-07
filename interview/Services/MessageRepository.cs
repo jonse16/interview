@@ -32,7 +32,7 @@ namespace interview.Services
 
         public List<Message> listMessage(int houseId)
         {
-            string sql = "SELECT * FROM message where house_id = {0} and deleted = 0";
+            string sql = "SELECT * FROM message where house_id = {0}";
             List<Object> param = new List<object>();
             param.Add(houseId);
             sql = string.Format(sql, param.ToArray());
@@ -54,7 +54,7 @@ namespace interview.Services
             string now = nowString();
             StringBuilder sb = new StringBuilder();
             sb.Append("INSERT INTO message(name, msg, house_id, create_date_time, last_update_date_time) ");
-            sb.Append("VALUES({0}, {1}, {2}, {3}, {3})");
+            sb.Append("VALUES('{0}', '{1}', {2}, '{3}', '{3}')");
             List<Object> param = new List<object>();         
             param.Add(name);
             param.Add(msg);
@@ -70,7 +70,7 @@ namespace interview.Services
         {
 
             StringBuilder sb = new StringBuilder();
-            sb.Append("UPDATE  message set msg = {1}, last_update_date_time = {2}  WHERE id = {0}");
+            sb.Append("UPDATE  message set msg = '{1}', last_update_date_time = '{2}'  WHERE id = {0}");
             List<Object> param = new List<object>();
             param.Add(msgId);
             param.Add(msg);

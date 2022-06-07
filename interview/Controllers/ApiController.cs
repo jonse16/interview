@@ -29,6 +29,7 @@ namespace interview.Controllers
             }
             catch (Exception ex) {
                 result.Add("status", 500);
+                result.Add("msg", "server error");
                 return Content(result.ToString(), "application/json; charset=utf-8");
             }
          
@@ -57,6 +58,7 @@ namespace interview.Controllers
             catch (Exception ex)
             {
                 result.Add("status", 500);
+                result.Add("msg", "server error");
                 return Content(result.ToString(), "application/json; charset=utf-8");
             }
         }
@@ -74,6 +76,7 @@ namespace interview.Controllers
             catch (Exception ex)
             {
                 result.Add("status", 500);
+                result.Add("msg", "server error");
                 return Content(result.ToString(), "application/json; charset=utf-8");
             }
         }
@@ -90,6 +93,7 @@ namespace interview.Controllers
             catch (Exception ex)
             {
                 result.Add("status", 500);
+                result.Add("msg", "server error");
                 return Content(result.ToString(), "application/json; charset=utf-8");
             }
         }
@@ -106,6 +110,7 @@ namespace interview.Controllers
             catch (Exception ex)
             {
                 result.Add("status", 500);
+                result.Add("msg", "server error");
                 return Content(result.ToString(), "application/json; charset=utf-8");
             }
         }
